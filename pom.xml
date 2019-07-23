@@ -17,6 +17,7 @@
 
     <modules>
         <module>alijdk-httpclient-test</module>
+	    <module>alijdk-mq-test</module>
     </modules>
 
 </project>
