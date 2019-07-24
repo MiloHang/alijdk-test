@@ -18,6 +18,7 @@
     <modules>
         <module>alijdk-httpclient-test</module>
 	    <module>alijdk-mq-test</module>
+        <module>alijdk-dubbo-test</module>
     </modules>
 
 </project>
