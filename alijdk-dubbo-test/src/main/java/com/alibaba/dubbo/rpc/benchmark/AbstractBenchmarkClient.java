@@ -230,7 +230,7 @@ public abstract class AbstractBenchmarkClient {
         System.out.println(" RT (500,1000]: " + (above500sum * 100 / allRequest) + "% " + above500sum + "/"
                 + allRequest);
         System.out.println(" RT > 1000: " + (above1000sum * 100 / allRequest) + "% " + above1000sum + "/" + allRequest);
-        System.exit(0);
+//        System.exit(0);
     }
 
     public abstract ClientRunnable getClientRunnable(String targetIP, int targetPort, int clientNums, int rpcTimeout,
