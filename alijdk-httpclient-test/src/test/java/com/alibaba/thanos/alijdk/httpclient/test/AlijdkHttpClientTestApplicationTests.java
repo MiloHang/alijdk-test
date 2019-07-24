@@ -41,7 +41,8 @@ public class AlijdkHttpClientTestApplicationTests {
 	}
 
 	@Test
-	public void getMappingTest() {
+	public void getMappingTest() throws Exception {
+		// Thread.sleep(100_000);
 		String url = uri.toString() + "get";
 		String response = HttpClientTool.doGetWithStringResult(url, null);
 		Assert.assertEquals("hello world", response);
