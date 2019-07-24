@@ -21,3 +21,15 @@ services:
       sh,
       /root/work/build.sh
     ]
+  oracle-jdk:
+    image: registry.cn-hangzhou.aliyuncs.com/fengxiu/ojdk
+    ports: 
+      - "8091:8091"
+    volumes: 
+      - "./build.sh:/root/work/build.sh"
+      - "./jar/:/root/work/"
+      - "../alijdk-test/:/root/work/alijdk-test"
+    command: [
+      sh,
+      /root/work/build.sh
+    ]

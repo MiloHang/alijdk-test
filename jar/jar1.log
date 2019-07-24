@@ -1,0 +1,24 @@
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::        (v2.0.5.RELEASE)
+
+2019-07-24 06:18:39.478  INFO 6 --- [           main] c.zhangke.SpringBootWebFluxApplication   : Starting SpringBootWebFluxApplication v1.0-SNAPSHOT on d6e3f75c4842 with PID 6 (/root/work/alijdk-test/jar/SpringBootWebFlux-1.0-SNAPSHOT.jar started by root in /root/work/alijdk-test/jar)
+2019-07-24 06:18:39.495  INFO 6 --- [           main] c.zhangke.SpringBootWebFluxApplication   : No active profile set, falling back to default profiles: default
+2019-07-24 06:18:39.764  INFO 6 --- [           main] onfigReactiveWebServerApplicationContext : Refreshing org.springframework.boot.web.reactive.context.AnnotationConfigReactiveWebServerApplicationContext@3f102e87: startup date [Wed Jul 24 06:18:39 UTC 2019]; root of context hierarchy
+2019-07-24 06:18:42.204  INFO 6 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : Mapped "{[/hello/{latency}],methods=[GET]}" onto public reactor.core.publisher.Mono<java.lang.String> com.zhangke.comtroller.HelloController.hello(int)
+2019-07-24 06:18:42.206  INFO 6 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : Mapped "{[/hello],methods=[GET]}" onto public reactor.core.publisher.Mono<java.lang.String> com.zhangke.comtroller.HelloController.hello()
+2019-07-24 06:18:42.400  INFO 6 --- [           main] o.s.w.r.f.s.s.RouterFunctionMapping      : Mapped (GET && /time) -> com.zhangke.config.RouterConfig$$Lambda$238/480971771@17695df3
+(GET && /date) -> com.zhangke.config.RouterConfig$$Lambda$240/611563982@6c9f5c0d
+(GET && /times) -> com.zhangke.config.RouterConfig$$Lambda$241/1615039080@de3a06f
+2019-07-24 06:18:42.427  INFO 6 --- [           main] o.s.w.r.handler.SimpleUrlHandlerMapping  : Mapped URL path [/webjars/**] onto handler of type [class org.springframework.web.reactive.resource.ResourceWebHandler]
+2019-07-24 06:18:42.428  INFO 6 --- [           main] o.s.w.r.handler.SimpleUrlHandlerMapping  : Mapped URL path [/**] onto handler of type [class org.springframework.web.reactive.resource.ResourceWebHandler]
+2019-07-24 06:18:42.922  INFO 6 --- [           main] o.s.w.r.r.m.a.ControllerMethodResolver   : Looking for @ControllerAdvice: org.springframework.boot.web.reactive.context.AnnotationConfigReactiveWebServerApplicationContext@3f102e87: startup date [Wed Jul 24 06:18:39 UTC 2019]; root of context hierarchy
+2019-07-24 06:18:44.024  INFO 6 --- [           main] o.s.j.e.a.AnnotationMBeanExporter        : Registering beans for JMX exposure on startup
+2019-07-24 06:18:44.298  INFO 6 --- [-server-epoll-5] r.ipc.netty.tcp.BlockingNettyContext     : Started HttpServer on /0.0.0.0:8091
+2019-07-24 06:18:44.299  INFO 6 --- [           main] o.s.b.web.embedded.netty.NettyWebServer  : Netty started on port(s): 8091
+2019-07-24 06:18:44.330  INFO 6 --- [           main] c.zhangke.SpringBootWebFluxApplication   : Started SpringBootWebFluxApplication in 6.398 seconds (JVM running for 7.801)
