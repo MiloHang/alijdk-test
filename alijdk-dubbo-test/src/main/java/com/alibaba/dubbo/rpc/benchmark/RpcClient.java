@@ -55,11 +55,11 @@ public class RpcClient extends AbstractClientRunnable {
     public Object invoke(ServiceFactory serviceFactory) {
         DemoService demoService = (DemoService) serviceFactory.get(DemoService.class);
         Object result = demoService.sendRequest(message);
-        return result;
-       /*if(result.equals(message)){
+//        return result;
+        if (result.equals(message)) {
             return result;
-        }else{
+        } else {
             throw new RuntimeException("Result Error");
-        }*/
+        }
     }
 }
