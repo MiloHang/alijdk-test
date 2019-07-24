@@ -33,3 +33,26 @@ services:
       sh,
       /root/work/build.sh
     ]
+  namesrv:
+    image: rocketmqinc/rocketmq:4.3.0
+    container_name: rmqnamesrv
+    ports:
+      - 9876:9876
+    volumes:
+      - ./data/namesrv/logs:/home/rocketmq/logs
+      - ./data/namesrv/store:/home/rocketmq/store
+    command: sh mqnamesrv
+    broker:
+      image: rocketmqinc/rocketmq:4.3.0
+      container_name: rmqbroker
+      ports:
+        - 10909:10909
+        - 10911:10911
+      volumes:
+        - ./data/broker/logs:/home/cz/logs
+        - ./data/broker/store:/home/cz/store
+        - ./data/broker/conf/broker.conf:/home/cz/workspace/bainianali/docker/data
+      #command: sh mqbroker -n namesrv:9876
+      command: sh mqbroker -n namesrv:9876 -c ../conf/broker.conf autoCreateTopicEnable=true
+      depends_on:
+        - namesrv
