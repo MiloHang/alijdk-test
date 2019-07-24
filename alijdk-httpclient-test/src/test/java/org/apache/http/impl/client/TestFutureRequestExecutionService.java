@@ -117,18 +117,6 @@ public class TestFutureRequestExecutionService {
     }
 
     @Test
-    public void shouldCancel() throws InterruptedException, ExecutionException {
-        thrown.expect(CoreMatchers.anyOf(
-                CoreMatchers.instanceOf(CancellationException.class),
-                CoreMatchers.instanceOf(ExecutionException.class)));
-
-        final FutureTask<Boolean> task = httpAsyncClientWithFuture.execute(
-                new HttpGet(uri), HttpClientContext.create(), new OkidokiHandler());
-        task.cancel(true);
-        task.get();
-    }
-
-    @Test
     public void shouldTimeout() throws InterruptedException, ExecutionException, TimeoutException {
         thrown.expect(TimeoutException.class);
 
