@@ -21,5 +21,19 @@
         <module>alijdk-dubbo-test</module>
         <module>alijdk-netty-test</module>
     </modules>
-
+    <repositories>
+        <!-- 代码库 -->
+        <repository>
+            <id>central</id>
+            <url>http://maven.aliyun.com/nexus/content/groups/public//</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+                <checksumPolicy>fail</checksumPolicy>
+            </snapshots>
+        </repository>
+    </repositories>
 </project>

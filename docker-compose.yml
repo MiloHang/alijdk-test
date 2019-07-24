@@ -1,0 +1,23 @@
+version: "3.0"
+services: 
+  jdk:
+    # build: .
+    image: registry.cn-hangzhou.aliyuncs.com/fengxiu/alijdk
+    ports: 
+      - "8091:8091"
+    volumes: 
+      - "./build.sh:/root/work/build.sh"
+    # 挂卷格式 "外面目录指定文件 ：/root/work/外面目录指定文件"
+      # - "./jar/SpringBootWebFlux-1.0-SNAPSHOT.jar:/root/work/test.jar"
+      - "../alijdk-test/:/root/work/alijdk-test"
+    # 运行jar 使用下面这个
+    # command: [
+    #   java,
+    #   -jar,
+    #   test.jar
+    # ]
+    # 运行maven使用下面这个
+    command: [
+      sh,
+      /root/work/build.sh
+    ]
