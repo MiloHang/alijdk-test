@@ -1,0 +1,357 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Application pause Exception &mdash; Alibaba JDK Troubleshooting Guide 1.0.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="GC pause exception" href="subsection-02.html" />
+    <link rel="prev" title="Delayed fault" href="section.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> Alibaba JDK Troubleshooting Guide
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../section-01/section.html">memory issues</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="section.html">Delayed fault</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Application pause Exception</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#fault-performance">Fault performance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cause-of-fault">Cause of fault</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#countedloop-jit-optimization">CountedLoop JIT Optimization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#operating-system-status-exeception-causes-slowly-entry-of-safepoint">Operating system status exeception causes slowly entry of Safepoint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#the-cleaning-time-after-entry-of-safepoint-is-slow">The cleaning time after entry of Safepoint is slow</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#safepoint-is-too-frequent">Safepoint is too frequent</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#fault-resolution">Fault resolution</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="subsection-02.html">GC pause exception</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Alibaba JDK Troubleshooting Guide</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="section.html">Delayed fault</a> &raquo;</li>
+        
+      <li>Application pause Exception</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/chapter-01/section-02/subsection-01.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="application-pause-exception">
+<h1>Application pause Exception<a class="headerlink" href="#application-pause-exception" title="Permalink to this headline">¶</a></h1>
+<p>Since the JVM will suspend the mutator thread to execute various virtual machine
+internal tasks. If the pause time is too long, it will have a serious impact on
+the RT delay of the application.</p>
+<div class="section" id="fault-performance">
+<h2>Fault performance<a class="headerlink" href="#fault-performance" title="Permalink to this headline">¶</a></h2>
+<p>Long-time pause of application often have several performances:</p>
+<ul class="simple">
+<li><p>Business call timeout</p></li>
+<li><p>By printing or Profling, it is found that some simple methods are unreasonably
+long, such as one call of <code class="docutils literal notranslate"><span class="pre">system.getCurrentMills()</span></code> with hundreds of ms</p></li>
+<li><p>Parameter <code class="docutils literal notranslate"><span class="pre">-XX:+PrintGCApplicationStoppedTime</span></code> shows long pause time</p></li>
+</ul>
+</div>
+<div class="section" id="cause-of-fault">
+<h2>Cause of fault<a class="headerlink" href="#cause-of-fault" title="Permalink to this headline">¶</a></h2>
+<p>Common reasons:</p>
+<ul class="simple">
+<li><p>CountedLoop JIT Optimization</p></li>
+<li><p>Operating system status exeception causes slowly entry of Safepoint</p></li>
+<li><p>The cleaning time after entry of Safepoint is slow</p></li>
+<li><p>Safepoint is too frequent</p></li>
+</ul>
+</div>
+<div class="section" id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="countedloop-jit-optimization">
+<h3>CountedLoop JIT Optimization<a class="headerlink" href="#countedloop-jit-optimization" title="Permalink to this headline">¶</a></h3>
+<p>CountedLoop JIT optimization has the potential to cause slow entry into Safepoint and thus affect application suspension. In the loop, JIT Compiler should generate Safepoint Poll instructions in the loop’s back edge, but to improve performance, JIT removes the instructions from Safepoint Poll in the Counted Loop. Counted Loop refers to the loop whose initial value, boundary, and step size are not changed cyclically. If the loop has a lot of loops and the code instruction cannot have a chance to get Safepoint notifications, it will be slow to get into Safepoint. The following code snippet shows several common loop patterns, which are labeled as Counted Loop and which are not.</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="c1">// 1. counted = reps is int/short/byte</span>
+<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">reps</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// You had plenty money, 1922</span>
+<span class="p">}</span>
+
+<span class="c1">// 2. Not counted</span>
+<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">int_reps</span><span class="p">;</span> <span class="n">i</span><span class="o">+=</span><span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// You let other women make a fool of you</span>
+<span class="p">}</span>
+
+<span class="c1">// 3. Not counted</span>
+<span class="k">for</span> <span class="p">(</span><span class="kt">long</span> <span class="n">l</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">l</span> <span class="o">&lt;</span> <span class="n">int_reps</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// You&#39;re sittin&#39; down and wonderin&#39; what it&#39;s all about</span>
+<span class="p">}</span>
+
+<span class="c1">// 4. Should be counted, but treated as uncounted</span>
+<span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="k">while</span> <span class="p">(</span><span class="o">++</span><span class="n">i</span> <span class="o">&lt;</span> <span class="n">reps</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// You ain&#39;t got no money, they will put you out</span>
+<span class="p">}</span>
+
+<span class="c1">// 5. Should be counted, but treated as uncounted</span>
+<span class="k">while</span> <span class="p">(</span><span class="n">i</span><span class="o">++</span> <span class="o">&lt;</span> <span class="n">reps</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// Why don&#39;t you do right, like some other men do</span>
+<span class="p">}</span>
+
+<span class="c1">// 6. Should be counted, and is!</span>
+<span class="k">while</span> <span class="p">(</span><span class="n">i</span> <span class="o">&lt;</span> <span class="n">reps</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// Get out of here and get me some money too</span>
+    <span class="n">i</span><span class="o">++</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>To confirm the problem, you can observe the spin time with the parameter <code class="docutils literal notranslate"><span class="pre">-XX:+PrintSafepointStatistics</span></code>. Spin indicates that VMThread polls all running threads for the time it takes to stop. It can be judged initially that this is the problem if the time is long. Through the <code class="docutils literal notranslate"><span class="pre">-XX:TraceSafepoint</span></code> and <code class="docutils literal notranslate"><span class="pre">verbose:gc</span></code> parameters, you can print out the specific actions of Safepoint in the GC log. When the parameter is opened, the VMThread will print the relevant information of the thread when the rotation thread is running. If it is found that a thread is running for a long time during the polling process, you can further determine which thread it is. Further through jstack and perf-map-agent, you can further discover the specific method of the problem, thus creating opportunities for revision. In addition, the JDK also has a SafepointTimeout parameter that can set a timeout period. Once a timeout occurs in Safepoint, the relevant thread information will be printed on the standard output.</p>
+<p>AJDK has a JVM parameter <code class="docutils literal notranslate"><span class="pre">-XX:PrintStacksOnSafepointTimeout</span></code>, which prints out the stack information directly after entering Safepoint timeout, which makes the positioning problem more convenient.</p>
+</div>
+<div class="section" id="operating-system-status-exeception-causes-slowly-entry-of-safepoint">
+<h3>Operating system status exeception causes slowly entry of Safepoint<a class="headerlink" href="#operating-system-status-exeception-causes-slowly-entry-of-safepoint" title="Permalink to this headline">¶</a></h3>
+<p>Java GC requires all mutator threads to enter the safepoint in order to recover. If a thread enters the safepoint for a long time, it will cause the entire application to pause for a long time, and such pause is often not reflected in the gc log, and will be ignored by the investigator.</p>
+<p>There are many reasons why a thread cannot quickly enter a safepoint due to an operating system exception. To confirm a safepoint problem, try opening the parameters <code class="docutils literal notranslate"><span class="pre">-XX:+PrintGCApplicationStoppedTime</span></code> and <code class="docutils literal notranslate"><span class="pre">-XX:+PrintSafepointStatistics</span></code>, <code class="docutils literal notranslate"><span class="pre">-XX:PrintSafepointStatisticsCount</span></code>. Through the parameter, you can get some statistics about the thread entering the safepoint, such as how long it takes for the thread waiting for the block to enter the safepoint, how long it takes for the spin to wait for the runable thread to enter the safepoint, and how much time is spent by all the mutator threads entering the synchronized state (stopped) , every time the GC STW time statistics and so on. With this data, you can determine if it is a problem caused by safepoint. If you are using AJDK, you can print out the thread stack of the timeout safepoint by setting <code class="docutils literal notranslate"><span class="pre">+PrintSafepointStatisticsTimeout</span></code>, which will also help to debug the problem.</p>
+<p>The slow entry of a safepoint due to an operating system exception is usually beyond the control of the user. A common reason is swap, a large number of swaps will cause the memory access of the Java mutator thread to be blocked by the kernel, and reasonably it will not be immediately stopped by the safepoint. In this scenario, you can observe the spin, block, and sync fields of the <code class="docutils literal notranslate"><span class="pre">PrintSafepointStatistics</span></code> output at the same time. If the spin, block, and sync are long, it can help confirm this problem.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Mmap can map files to return address to the user. A common misconception is that the mutator thread seems to be able to access the space directly by address plus offset. This access may be delayed by the kernel due to disk IO, thus Entering safepoint will also be influential. But in fact this situation does not generally happen, because the mutator thread can not get access through the address plus offset like C language at the Java level, JVM needs to consider the array Object Header, so the actual offset generated by the JVM access will be larger than the C language and it does not meet the access requirements of mmap. In fact, Java access to the mmap address space can only be done through Unsafe native API. The native method does not affect the JVM entering safepoints. See the paragraphs later in this section for the reasons.</p>
+</div>
+<p>In addition to affecting the operation of the mutator into the safepoint, a large number of swaps will also affect the hotspot itself into the safepoint implementation, hotspot VMThread will perform a <code class="docutils literal notranslate"><span class="pre">serialize_thread_state</span></code> operation before the notify safepoints, the purpose of the operation is to use the system call <code class="docutils literal notranslate"><span class="pre">mprotect()</span></code> to achieve the effect of the memory barrier instruction. By changing the page attribute of the <code class="docutils literal notranslate"><span class="pre">memory_serialize_page</span></code>, cpu can be forced to synchronize the cache line and memory, and force some state information of the thread to be synchronously refreshed, thus preparing for the safepoint notify.</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="c1">// Serialize all thread state variables</span>
+<span class="kt">void</span> <span class="n">os</span><span class="o">::</span><span class="n">serialize_thread_states</span><span class="p">()</span> <span class="p">{</span>
+  <span class="c1">// On some platforms such as Solaris &amp; Linux, the time duration of the page</span>
+  <span class="c1">// permission restoration is observed to be much longer than expected  due to</span>
+  <span class="c1">// scheduler starvation problem etc. To avoid the long synchronization</span>
+  <span class="c1">// time and expensive page trap spinning, &#39;SerializePageLock&#39; is used to block</span>
+  <span class="c1">// the mutator thread if such case is encountered. See bug 6546278 for details.</span>
+  <span class="n">Thread</span><span class="o">::</span><span class="n">muxAcquire</span><span class="p">(</span><span class="o">&amp;</span><span class="n">SerializePageLock</span><span class="p">,</span> <span class="s">&quot;serialize_thread_states&quot;</span><span class="p">);</span>
+  <span class="n">os</span><span class="o">::</span><span class="n">protect_memory</span><span class="p">((</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="n">os</span><span class="o">::</span><span class="n">get_memory_serialize_page</span><span class="p">(),</span>
+                 <span class="n">os</span><span class="o">::</span><span class="n">vm_page_size</span><span class="p">(),</span> <span class="n">MEM_PROT_READ</span><span class="p">);</span>
+  <span class="n">os</span><span class="o">::</span><span class="n">protect_memory</span><span class="p">((</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="n">os</span><span class="o">::</span><span class="n">get_memory_serialize_page</span><span class="p">(),</span>
+                 <span class="n">os</span><span class="o">::</span><span class="n">vm_page_size</span><span class="p">(),</span> <span class="n">MEM_PROT_RW</span><span class="p">);</span>
+  <span class="n">Thread</span><span class="o">::</span><span class="n">muxRelease</span><span class="p">(</span><span class="o">&amp;</span><span class="n">SerializePageLock</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>According to <a class="reference external" href="https://bugs.openjdk.java.net/browse/JDK-8187809">the community discussion</a> , the reason why the memory barrier instruction is not used directly is that Oracle finds that the memory barrier instruction is expensive, and the overhead on some CPUs is more than twice of <code class="docutils literal notranslate"><span class="pre">serialize_thread_states</span></code>. Of course, the JDK design also adopts some tricks to avoid the logic of false sharing of the same cache line on the hardware. For example, different threads hash in the page to avoid state variables of different threads hit the same cache line through the address of the thread pointer. (see the JDK <code class="docutils literal notranslate"><span class="pre">MacroAssembler::serialize_memory</span> <span class="pre">implementation</span></code>).</p>
+<p><code class="docutils literal notranslate"><span class="pre">Os::protect_memory</span></code> will call mprotect of os. In case of insufficient physical memory and a large amount of swap, mprotect will be dragged for a long time, which will cause the safepoint to enter slowly. From <code class="docutils literal notranslate"><span class="pre">-XX:+PrintSafepointStatistics</span></code> you will find that although the spin and block times are 0, the sync time is longer. For details, see <a class="reference external" href="https://bugzilla.kernel.org/show_bug.cgi?id=5493">kernel bug 5493</a> .</p>
+<p>In addition, if the Java process has a large number of pointer accesses after mmap, it will also affect the mprotect inside the hotspot, because mprotect has the operation of flush tlb, which will hold the spin lock, when the mmap frequently has a page fault exception, the block will be locked.</p>
+<p>In addition, other processes on the machine should also consider the interference of the CPU. The situation will cause some thread starvation methods to take a long time to get execution opportunities into safepoint. If the CPU causes VMThread to starve, then the performance is long-time sync, short-time spin and block. If the CPU causes the Java Mutator thread to starve, then the performance is long-time sync, spin, and block.</p>
+<p>In addition, the <code class="docutils literal notranslate"><span class="pre">os::serialize_thread_states</span></code> in the JDK source code will try to hold a mutex called <code class="docutils literal notranslate"><span class="pre">SerializePageLock</span></code>. if this mutex lock competition will cause the operation to become longer and cause long-time sync phenomenon? At first glance, it seems that this question is very reasonable, but in fact it is redundant. In the early JDK implementation, there was no such lock. When VMThread decides to perform safepoint notice, VMThread will mprotect page read to <code class="docutils literal notranslate"><span class="pre">memory_seriable_page</span></code> according to the logic of <code class="docutils literal notranslate"><span class="pre">os::serialize_thread_states</span></code> firstly, then mprotect page rw, if there is no protection of this lock, when mtrortect page read is executed, if other mutator threads perform the Thread state transition to execute the <code class="docutils literal notranslate"><span class="pre">memory_seriable_page</span></code> write operation, since the page has been set to the read-only property, then SIGSEGV will be triggered at this time, and then an infinite loop will continue to try to write this <code class="docutils literal notranslate"><span class="pre">memory_seriable_page</span></code>. The infinite loop may seize the CPU, causing VMThread to be hungry, and the next mprotect page rw, which is close to the next step, cannot be executed. This is a vicious circle. VMThread is always in <code class="docutils literal notranslate"><span class="pre">os::serialize_thread_states</span></code>, and the system CPU is high. Later, the JDK solved the problem, added the lock, and checked the lock in the SignalHandler, thus unlocking the loop. Since only SignalHandler will compete with <code class="docutils literal notranslate"><span class="pre">os::serialize_thread_states</span></code> for this lock, and SignalHandler is a very uncommon operation, this lock will not cause fierce competition, and this worry will not be discussed.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Safepoint refers to the scope of an instruction execution. The thread running to this range is considered to be “safe”. After the thread reaches the safepoint, other threads can safely observe and manipulate the relevant state of the “safe” thread. When the JIT compiles, it inserts some additional poll safepoint flag into the instruction, so that the Java thread can check the safepoint flag at a “reasonable” interval to determine whether the thread enters the safepoint. In general, JIT will insert the instructions related to the poll safepoint flag in such places:</p>
+<ul class="simple">
+<li><p>Interpreter performs between two bytecodes</p></li>
+<li><p>The back edge of non-CountedLoop compiled by C1/C2 (there will be a specific explanation of CountedLoop)</p></li>
+<li><p>Method Exit compiled by C1/C2. Note that if the method is inline, the compiler will remove the poll safepoint flag from the corresponding Method Exit section</p></li>
+</ul>
+<p>If you turn on <code class="docutils literal notranslate"><span class="pre">-XX:+PrintAssembly</span></code>, you can search for the characters “poll” and “poll return” in the standard output. These characters appear as the instructions related to the poll safepoint flag.</p>
+<p>JNI is a special method. When the JNI method is running, it is considered to be in safepoint. Because the JNI method itself is running “safe” in the JVM, there is no need to spend the effort to interrupt the execution of JNI. . However, when the JNI method exits and returns to the Java layer, the poll safepoint flag is used to determine whether to suspend the execution of the JNI method.</p>
+</div>
+</div>
+<div class="section" id="the-cleaning-time-after-entry-of-safepoint-is-slow">
+<h3>The cleaning time after entry of Safepoint is slow<a class="headerlink" href="#the-cleaning-time-after-entry-of-safepoint-is-slow" title="Permalink to this headline">¶</a></h3>
+<p>After all threads have entered Safepoint, VMThread will perform some cleanup actions, such as Deflate Idle Monitor, update inline cache, climb stack tag nmethod heat, rotation gc log, etc. (see the <code class="docutils literal notranslate"><span class="pre">SafesSynchronize::do_cleanup_tasks</span></code> function of Hotspot source for specific logic). These cleanup actions may also be slower and cause timeout failures. The user can confirm this by opening the parameter <code class="docutils literal notranslate"><span class="pre">-XX:TraceSafepointCleanupTime</span></code>.</p>
+</div>
+<div class="section" id="safepoint-is-too-frequent">
+<h3>Safepoint is too frequent<a class="headerlink" href="#safepoint-is-too-frequent" title="Permalink to this headline">¶</a></h3>
+<p>Safepoint is not just caused by GC, some special scenes will also cause safepoint, such as <code class="docutils literal notranslate"><span class="pre">RevokeBiasLock</span></code>. Due to the particularity of the scene, some applications of BiasLock not only cannot play an optimization role, but have a large number of RevokeBias, which frequently trigger safepoint. The problem can be determined by observing the GC log with <code class="docutils literal notranslate"><span class="pre">-XX:+PrintSafepointStatistics</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>BiasLock is a special optimization of the VM for Java Lock. Generally speaking, the implementation of Lock is generally implemented based on the mutex provided by the OS, but the mutux of the os layer involves the switching of the kernel state, and the execution overhead is relatively large. However, some studies have shown that most Java Locks do not compete. Based on this assumption, VM implements a bold Thin Lock optimization, which is locked with a cheaper Thread ID CAS method. If CAS fails, then It means competition, it will be inflation into an OS level weight lock. If multi-threaded locks do not compete (the same lock-protected code shared by different threads overlaps in the execution sequence), Thin Lock is much more efficient than monitor. However, VM is not satisfied with Thin Lock. Since Thin Lock needs to perform CAS operations every time it locks and releases, although CAS is cheaper than OS mutex, but the VM is more radical to implement a Bias Lock optimization. Bias Lock’s optimization method is to find a way to avoid performing CAS operations every time you lock and release. It assumes that if most of the application’s scenarios are locked, it will only be held and released by a certain Thread. If this is the case, then There is no need to execute the CAS command every time lock and unlock, but the CAS is executed when the Thread is locked for the first time, and then it is not released until it is found that the lock is used by other threads before the revoke baised action, revoke baised The consequence is to have the thread pass the CAS rebias to another revoking thread (CAS success) or revoke to the thin lock (CAS failed). It should be noted that the operation of RevokeBiased requires a safepoint</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The essence of optimization is speculation, and the JVM’s optimization of locks fully demonstrates this. JVM developers have found that in most scenarios, locks are only used by one thread. Even if the lock is used by multiple threads, the real competition is very small. The key logic execution of the lock protection of different threads is also interleaved. Will overlap. Based on this assumption, the JVM’s lock implementation is fully speculative. It first uses the scenario where the speculative lock is only used by one thread, and uses very cheap ordinary memory operations to express the lock operation. If the speculation fails in this case, the JVM will try to speculate. The lock does not really compete with the scene, using a cheaper CAS operation to express the lock operation, if the speculation fails, the JVM will fall into the OS lock. If the assumption is true, the JVM’s investment opportunities bring significant performance gains. If the assumption fails, these speculations will incur additional overhead compared to using the OS lock directly. If the application’s competition is really fierce, users need to actively turn off these speculative optimizations.</p>
+</div>
+</div>
+</div>
+<div class="section" id="fault-resolution">
+<h2>Fault resolution<a class="headerlink" href="#fault-resolution" title="Permalink to this headline">¶</a></h2>
+<p>Due to the abnormality of the operating system caused by the slow entry into the safepoint, there may be many reasons, such as swap, mmap large page fault operation, high disk io, noisy neigbour, etc. These need system engineers to solve from the system level, JVM level can not do more More things. If the confirmation is caused by the slow execution of mprotect, you can try to use the UseMemBar parameter to bypass, but it will not cure the problem. The other part may be due to JIT optimization of the Counted Loop.</p>
+<p>If the safepoint caused by the JIT optimization of countedLoop is slow, there are several ways to try to solve it:</p>
+<ul class="simple">
+<li><p>Consider using the JVM parameter <code class="docutils literal notranslate"><span class="pre">-XX:+UseCountedLoopSafepoints</span></code>, this parameter will ensure that the JIT compiler will add Safepoint Polling every time CountedLoop is back, but it may cause Crash on some JDK versions, see <a class="reference external" href="https://bugs.openjdk.java.net/browse/JDK-8161147">Bug</a> . And it may sacrifice a bit of performance.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">-XX:CompileCommand='exclude,binary/class/Name,methodName'</span></code> parameter is used to disable compilation of problematic methods, as well as some performance loss.</p></li>
+<li><p>Rewrite your code so that the compiler doesn’t recognize it as CountedLoop, or simply insert Safepoint manually via the function call <code class="docutils literal notranslate"><span class="pre">Thread.yield()</span></code>.</p></li>
+</ul>
+<p>The slower cleanup solution after Safepoint entry is more complicated. If the rotate gc log is slow, you may need to redirect the gc log. Other reasons require specific analysis of specific issues.</p>
+<p>Safepoint is too frequent. If it is caused by BiasedLock, the VM parameter <code class="docutils literal notranslate"><span class="pre">-XX:-UseBiasedLocking</span></code> can be solved. Other scenarios cause frequent safety points require further analysis.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="subsection-02.html" class="btn btn-neutral float-right" title="GC pause exception" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="section.html" class="btn btn-neutral float-left" title="Delayed fault" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, fangxi.yfx
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,221 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>内存故障 &mdash; Alibaba JDK Troubleshooting Guide 1.0.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="堆外内存增涨异常" href="subsection-01.html" />
+    <link rel="prev" title="阿里巴巴JDK故障排查指南" href="../../index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> Alibaba JDK Troubleshooting Guide
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">内存故障</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="subsection-01.html">堆外内存增涨异常</a></li>
+<li class="toctree-l2"><a class="reference internal" href="subsection-02.html">堆内内存增涨异常</a></li>
+<li class="toctree-l2"><a class="reference internal" href="subsection-03.html">GC触发异常</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../section-02/section.html">延迟故障</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Alibaba JDK Troubleshooting Guide</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+      <li>内存故障</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/chapter-01/section-01/section.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="memory-issues">
+<span id="id1"></span><h1>内存故障<a class="headerlink" href="#memory-issues" title="Permalink to this headline">¶</a></h1>
+<p>Java的内存分为两类，一类是堆内内存，另外一类是堆外内存。</p>
+<p>堆外内存指的是不受JVM虚拟机垃圾回收器管理的内存，这部分内存一般包括Metaspace，通过Unsafe分配的内存，JVM内部为虚拟机服务的内存以及用户JNI内部自行维护的内存（这些部分内存主要是通过c／cpp传统的new，malloc来分配的，值得注意的是JNI API提供了一些创建对象的API比如NewObject，NewObjectArray等，这些API创建的对象是不算在堆外的）等等。由于这部分内存不受JVM垃圾回收器的管理，如果使用方式不正确，很容易造成内存故障。</p>
+<p>与堆外内存相对应的是堆内内存，堆内内存主要是指受到JVM虚拟机垃圾回收器管理的内存，主要包括Java程序中通过new关键字分配的对象，JNI方法通过JNI方法比如NewObject，NewObjectArray等方法创建的对象等等。这些对象被垃圾回收器管理，用户不需要显式得进行内存释放的操作，垃圾回收器根据一定的策略，发现堆内的内存不再被程序使用了，它会自动进行对象以及内存的清理。</p>
+<p>内存故障是Java应用经常遇到的一类故障, 这类故障的表现多种多样，有的内存故障会造成GC异常，从而影响应用的响应时间和吞吐量，有的堆外泄漏直接引起OS的OOM Killer，还有的内存故障比如CodeCache则可能造成应用的CPU Load突然升高等等。</p>
+<p>排查人员接到报警后，通过系统命令(top, tsar, jstat等)、查看gc日志、查看应用业务日志等手段可以快速识别这类故障，然后对故障进行归纳分类，从而进入本规范相应的条目进行排查。</p>
+<p>在排查内存故障之前，排查人员需要对内存概念及知识点有正确认识，请参考相应章节 。排查流程当中也会有的链接进行跳转。</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="subsection-01.html">堆外内存增涨异常</a></li>
+<li class="toctree-l1"><a class="reference internal" href="subsection-02.html">堆内内存增涨异常</a></li>
+<li class="toctree-l1"><a class="reference internal" href="subsection-03.html">GC触发异常</a></li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="subsection-01.html" class="btn btn-neutral float-right" title="堆外内存增涨异常" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../../index.html" class="btn btn-neutral float-left" title="阿里巴巴JDK故障排查指南" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, fangxi.yfx
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
