@@ -1,0 +1,764 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>GC trigger exception &mdash; Alibaba JDK Troubleshooting Guide 1.0.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Delayed fault" href="../section-02/section.html" />
+    <link rel="prev" title="Abnormal memory increase in the on-heap memory" href="subsection-02.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> Alibaba JDK Troubleshooting Guide
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="section.html">memory issues</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="subsection-01.html">Off-Heap Memory Increase Abnormality</a></li>
+<li class="toctree-l2"><a class="reference internal" href="subsection-02.html">Abnormal memory increase in the on-heap memory</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">GC trigger exception</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#fault-performance">Fault performance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cause-of-issue">cause of issue</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#metaspace-perm-usage-is-too-high">Metaspace/Perm usage is too high</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#metaspace-fragmentation">Metaspace fragmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gc-parameter-settings-are-not-reasonable">GC parameter settings are not reasonable</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cms-memory-fragmentation-leads-to-full-gc">CMS memory fragmentation leads to Full GC</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#on-heap-memory-increase-abnormality">On-heap memory increase abnormality</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#off-heap-memory-increase-abnormality">Off-heap memory increase abnormality</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#full-gc-triggered-by-the-user-through-tools-such-as-jmap">Full GC triggered by the user through tools such as jmap</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#business-logic-error-calling-system-gc">Business logic error calling System.gc</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#unnecessary-full-gc-caused-by-expansion-of-large-size-arraylist">Unnecessary Full GC caused by expansion of large size ArrayList</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#large-business-pressure-leads-to-frequent-ygc">Large business pressure leads to frequent YGC</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#exception-gc-caused-by-javaagent">Exception GC caused by javaagent</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Troubleshooting</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../section-02/section.html">Delayed fault</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Alibaba JDK Troubleshooting Guide</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="section.html">memory issues</a> &raquo;</li>
+        
+      <li>GC trigger exception</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/chapter-01/section-01/subsection-03.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="gc-trigger-exception">
+<h1>GC trigger exception<a class="headerlink" href="#gc-trigger-exception" title="Permalink to this headline">¶</a></h1>
+<p>Since the JVM will be Stop-the-Word at GC, the fewer triggers for the GC, the
+better performance. It often means a failure if the frequent or the suspicious
+trigger timing GC is observed through the GC log.</p>
+<p>In addition, the on-heap memory leak and the off-heap memory leak are also
+related to the GC triggering abnormality, some memory leaks will also cause the
+GC to trigger frequently. Please check the related troubleshooting when
+troubleshooting, read the relevant sections.</p>
+<div class="section" id="fault-performance">
+<h2>Fault performance<a class="headerlink" href="#fault-performance" title="Permalink to this headline">¶</a></h2>
+<p>The frequent GC is found by GC log. For GC, there is generally an experience: it
+is often a fault signal for GC anomalies if the GC throughput is less than 90%,</p>
+<p><code class="docutils literal notranslate"><span class="pre">GC</span> <span class="pre">Throughput</span> <span class="pre">=</span> <span class="pre">1</span> <span class="pre">-</span> <span class="pre">GC</span> <span class="pre">Pause</span> <span class="pre">Time</span> <span class="pre">/</span> <span class="pre">Total</span> <span class="pre">Application</span> <span class="pre">Run</span> <span class="pre">Time</span></code></p>
+<p>In absolute terms, a YGC pause time of around 100ms is a very common pause time.
+50ms can be used as a general optimization target if the application’s response
+time requirements are high. 20ms is generally the limit of optimization.</p>
+<p>For GCs in the Old Zone, such as the CMS GC, the frequency of the GC is usually
+dependent on the application which is in the smooth running state. CMS GC is a
+very common frequency in a few hours in general. However, the developer can pay
+attention to the performance of the GC which is triggered once in a few minutes
+that it maybe a signal of a CMS GC anomaly.</p>
+<p>There are many applications that use CMS for garbage collection,
+<code class="docutils literal notranslate"><span class="pre">UseCMSInitiatingOccupancyOnly</span></code> and <code class="docutils literal notranslate"><span class="pre">CMSInitiatingOccupancyFraction</span></code> are
+used to specify when the CMS GC is triggered (A CMS GC is triggered when the
+usage of the old area exceeds <code class="docutils literal notranslate"><span class="pre">CMSInitiatingOccupancyFraction</span></code>). However,
+sometimes the observation of log shows that the frequent CMS GC is triggered
+when the usage of the old area does not reach <code class="docutils literal notranslate"><span class="pre">CMSInitiatingOccupancyFraction</span></code>.
+This is often caused by Metaspace fragmentation or CMS fragmentation.</p>
+<p>The frequent GC triggering is also a common type of problem which is easy to
+confirm in the GC log. Everyone knows that Full GC is a full-stacked
+Stop-The-Word GC. It is actually an extreme means that the JVM’s GC can’t keep
+up with the business pace, so the Full GC needs to be avoided as much as
+possible. It should be noted that in many monitoring systems of Alibaba, the CMS
+GC is also treated as a Full GC and needs to be distinguished. The frequency of
+the Full GC varies according to the application, and once a day, once a week, it
+is necessary to determine whether the frequency is abnormal in combination with
+the specific conditions of the application.</p>
+</div>
+<div class="section" id="cause-of-issue">
+<h2>cause of issue<a class="headerlink" href="#cause-of-issue" title="Permalink to this headline">¶</a></h2>
+<p>The common reasons are as follows:</p>
+<ul class="simple">
+<li><p>Metaspace/Perm is too high</p></li>
+<li><p>Metaspace fragmentation</p></li>
+<li><p>GC parameter settings are not reasonable</p></li>
+<li><p>CMS memory fragmentation leads to Full GC</p></li>
+<li><p>on-heap heavy memory increase abnormality</p></li>
+<li><p>off-heap memory increase abnormality</p></li>
+<li><p>Business logic error calling <code class="docutils literal notranslate"><span class="pre">System.gc</span></code></p></li>
+<li><p>Full GC triggered by the user via jmap and other tools</p></li>
+<li><p>Unnecessary Full GC caused by expansion of large-sized <code class="docutils literal notranslate"><span class="pre">ArrayList</span></code></p></li>
+<li><p>Business pressure is relatively high leading to frequent YGC</p></li>
+<li><p>javaagent caused an exception GC</p></li>
+</ul>
+</div>
+<div class="section" id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="metaspace-perm-usage-is-too-high">
+<span id="index-0"></span><h3>Metaspace/Perm usage is too high<a class="headerlink" href="#metaspace-perm-usage-is-too-high" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">CMSCollector:</span> <span class="pre">collect</span> <span class="pre">for</span> <span class="pre">metadata</span> <span class="pre">allocation</span></code> or
+<code class="docutils literal notranslate"><span class="pre">CMS</span> <span class="pre">perm</span> <span class="pre">gen</span> <span class="pre">initiated</span></code> will be printed in the gc log if the <code class="docutils literal notranslate"><span class="pre">-verbose:gc</span></code>
+parameter is enabled. In addition, <code class="docutils literal notranslate"><span class="pre">java.lang.OutOfMemoryError:</span> <span class="pre">Metaspace</span></code> is
+also a signal that Metaspace uses too high. Inspectors can use jstat and gcutil
+to observe the usage of Metaspace to confirm the failure. Metaspace/Perm can be
+used to troubleshoot the corresponding sections of the on-heap memory anomaly.</p>
+</div>
+<div class="section" id="metaspace-fragmentation">
+<span id="index-1"></span><h3>Metaspace fragmentation<a class="headerlink" href="#metaspace-fragmentation" title="Permalink to this headline">¶</a></h3>
+<p>When the trigger of the GC was found to be caused by Metaspace, the use of
+Metaspace was not very high by gcutil. This phenomenon means that Metaspace is
+fragmented. This is a known bug in OpenJDK. JDK11 has been fixed to participate
+in <a class="reference external" href="https://bugs.openjdk.java.net/browse/JDK-8198423">Bug</a>. Please refer to
+the Metspace leak section of the out-of-heap memory leak for troubleshooting.</p>
+</div>
+<div class="section" id="gc-parameter-settings-are-not-reasonable">
+<span id="gcparamanchor"></span><h3>GC parameter settings are not reasonable<a class="headerlink" href="#gc-parameter-settings-are-not-reasonable" title="Permalink to this headline">¶</a></h3>
+<p>The abnormality of the GC trigger is usually closely related to the setting of
+the GC parameters. Usually, GC Xmx, Xms settings generally have the following
+empirical formula:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Java</span> <span class="n">Heap</span> <span class="n">size</span> <span class="p">(</span><span class="o">-</span><span class="n">Xmx</span><span class="p">,</span> <span class="o">-</span><span class="n">Xms</span><span class="p">)</span>
+  <span class="o">=</span> <span class="mi">3</span><span class="n">x</span> <span class="ow">or</span> <span class="mi">4</span><span class="n">x</span> <span class="n">Live</span> <span class="n">size</span> <span class="n">of</span> <span class="n">the</span> <span class="n">Old</span> <span class="n">area</span> <span class="n">after</span> <span class="n">Full</span> <span class="n">GC</span> <span class="n">Metaspace</span> <span class="n">size</span> <span class="p">(</span><span class="o">-</span><span class="n">XX</span><span class="p">:</span><span class="n">MaxMetaspaceSize</span><span class="p">)</span>
+  <span class="o">=</span> <span class="mf">1.2</span><span class="n">x</span> <span class="ow">or</span> <span class="mf">1.5</span><span class="n">x</span> <span class="n">Live</span> <span class="n">Size</span> <span class="n">of</span> <span class="n">the</span> <span class="n">Metaspace</span> <span class="n">after</span> <span class="n">Full</span> <span class="n">GC</span> <span class="n">Young</span> <span class="n">area</span> <span class="n">size</span> <span class="p">(</span><span class="o">-</span><span class="n">Xmn</span><span class="p">)</span>
+  <span class="o">=</span> <span class="mi">1</span><span class="n">x</span> <span class="ow">or</span> <span class="mf">1.5</span><span class="n">x</span> <span class="n">Full</span> <span class="n">Size</span> <span class="n">of</span> <span class="n">Old</span> <span class="n">Area</span> <span class="n">after</span> <span class="n">Full</span> <span class="n">GC</span> <span class="n">Old</span> <span class="n">Area</span> <span class="n">Size</span>
+  <span class="o">=</span> <span class="mi">2</span><span class="n">x</span> <span class="ow">or</span> <span class="mi">3</span><span class="n">x</span> <span class="n">Full</span> <span class="n">Size</span> <span class="n">of</span> <span class="n">Old</span> <span class="n">Area</span> <span class="n">after</span> <span class="n">Full</span> <span class="n">GC</span>
+</pre></div>
+</div>
+<p>This GC empirical formula can usually be used as a reference for GC tuning. Of
+course, for many scenarios, this empirical formula cannot be completely covered,
+and needs specific analysis.</p>
+<div class="admonition note" id="index-2">
+<p class="admonition-title">Note</p>
+<p>There are many reasons for YGC triggering. For the ParNew/CMS combination,
+the usual cause of YGC is Allocation Failure. In this case, the Young area
+cannot allocate new objects and needs to trigger YGC for garbage collection.
+In addition, if you turn on the <code class="docutils literal notranslate"><span class="pre">-XX:CMSScavengeBeforeRemark</span></code> control
+option, ParNew will also be triggered during the final-remark phase of the
+CMS for YGC reclamation. In addition to these two more common reasons, there
+are other reasons, such as the use of <code class="docutils literal notranslate"><span class="pre">-XX:+ScavengeALot</span></code> in the Debug
+version of the JDK, will periodically trigger YGC to test. When the JNI code
+runs to Critical-Region, all YGCs will be Pending. When the JNI code exits
+Critical-Region, the garbage collector will make up a YGC. In addition, if
+the user uses the WhiteBox API, YGC can also be dynamically triggered by the
+API in the program.</p>
+<p>YGC is triggered when the Young area can no longer allocate objects for G1.
+In addition, the intial-mark phase of Conccurent Cycle is essentially a YGC.
+In addition, G1 may trigger YGC when processing Humongous Object allocation.
+The scenarios in which the Critical-Region and WhiteBox APIs listed above
+trigger the YGC are equally valid for G1. If G1 does not limit the size of
+the Young area, YGC will fully respect <code class="docutils literal notranslate"><span class="pre">MaxGCPauseMillis</span></code> which will
+dynamically determine the size of the next Young area based on the
+historical GC pause time data to control the pause time. The GC will choose
+the larger Young area as much as possible. However, the premise is that the
+recovery time estimated by these Young areas cannot exceed
+<code class="docutils literal notranslate"><span class="pre">MaxGCPauseMillis</span></code>. Of course, the Young area dynamic adjustment must be
+within the limits of <code class="docutils literal notranslate"><span class="pre">G1NewSizePercent</span></code> and <code class="docutils literal notranslate"><span class="pre">G1MaxNewSizePercent</span></code>.
+Therefore, in general, if the historical data is estimated to be relatively
+accurate, the GGC’s YGC Paustime will be relatively stable, and the pause
+time will fluctuate around <code class="docutils literal notranslate"><span class="pre">MaxGCPauseMillis</span></code>.</p>
+</div>
+<div class="admonition note" id="index-3">
+<p class="admonition-title">Note</p>
+<p>An object whose object size is larger than 50% of <code class="docutils literal notranslate"><span class="pre">HeapRegionSize</span></code> is
+called Humongous Object in G1. Since this part of the object is relatively
+large, the cost of copying back and forth between Young and Old is too
+large, and G1 allocates Homongous Object directly to the old area. When
+Humongous Object is allocated, it first evaluates whether the existing Heap
+occupancy size reaches the IHOP threshold if the required allocation size is
+met. If the IHOP threshold is reached, a Concurrent Cycle with the
+“concurrent humongous allocation” field will be triggered once. There are
+two main reasons for doing this: First, G1 is worried that the Humongous
+Object consumes too much memory. Doing such an inspection and evaluation
+every time it is allocated can trigger the Conccurent Cycle to prepare for
+the subsequent Mixed GC recycling of the old area as soon as possible. The
+other reason is The first phase of Conccurent Cycle Intial Mark is
+essentially a YGC, YGC will also recycle Humongous Object
+(<code class="docutils literal notranslate"><span class="pre">-XX:</span> <span class="pre">G1EagerReclaimHumongousObjects</span></code> is opened by default in AJDK8).
+Recycling Humongous Object as early as possible can avoid the failure of the
+subsequent Humongous Object allocation. After the evaluation is completed,
+the next assignment function will optimistically make a speculative
+allocation attempt on the Humongous Object. Since the Concurrent Cycle in
+the first step is a concurrent process, the speculative allocation may fail.
+Once the allocation fails, it will proceed. A Homongous Allocation triggers
+the YGC and then continues to try the Humongous Object assignment until it
+succeeds. Interested readers can carefully study the
+<code class="docutils literal notranslate"><span class="pre">G1CollectedHeap::attempt_allocation_humongous</span></code> related function part of
+the Hotspot source.</p>
+</div>
+<div class="admonition note" id="index-4">
+<p class="admonition-title">Note</p>
+<p>There are many reasons for GC triggering in the Old District. Taking the CMS
+as an example, as an old GC, the CMS is usually triggered because the
+threshold of <code class="docutils literal notranslate"><span class="pre">CMSInitingOccupancyFraction</span></code> is reached. In addition, the
+lack of Metaspace memory will trigger the CMS, and another situation is
+often ignored which is the <code class="docutils literal notranslate"><span class="pre">ConcurrentMarkSweepThread</span></code> background who will
+also trigger the Old GC when it determines that the old zone cannot meet the
+next promotion requirement. If the available size of the old area is less
+than the historical average promotion size or the current use size of the
+young area, it is considered that the next promotion requirement cannot be
+met. The <code class="docutils literal notranslate"><span class="pre">CMSCollector:</span> <span class="pre">collect</span> <span class="pre">because</span> <span class="pre">incremental</span> <span class="pre">collection</span> <span class="pre">will</span> <span class="pre">fail</span></code>
+will be printed in the gc log if -verbose:gc is enabled. You can check if
+the gc log is due to the situation. It is worth noting that this situation
+needs to be distinguished from the failure of the YGC promotion guarantee.
+Both of these cases involve checking whether the promotion is possible, so
+it is similar, but the triggering scenario is different. YGC first checks
+the promotion guarantee, once it fails, The Full GC will be triggered, and
+<code class="docutils literal notranslate"><span class="pre">ConcurrentMarkSweepThread</span></code> will do the promotion guarantee check, which
+will trigger the CMS GC. These two scenarios complement each other, and the
+CMS GC triggers the CMS GC as early as possible through the promotion
+guarantee check to avoid the Full GC caused by the failure of the YGC
+promotion guarantee. The reader may be curious as to why the YGC failed to
+trigger the CMS GC when the promotion failed. This is because YGC has
+already started because of the Hotspot implementation. At this time, the
+promotion guarantee failed. The Young area is in an inconsistent state and
+cannot trigger the concurrent CMS GC, but the Full GC that triggers a
+stop-the-world is indeed feasible.</p>
+<p>G1’s Old Zone recovery is performed by Mixed GC. When YGC is finished, it
+will check the Heap usage size. A Concurrent Cycle will be triggered if the
+IHOP threshold is reached. The Initial Mark phase in Concurrent Cycle is
+essentially a YGC. In the Concurrent Cycle, G1 will scan the entire heap
+concurrently, and calculate the survival ratio of the objects in each
+Region. When the Concurrent Cycle ends, it’s usually followed by a YGC and
+then the Mixed GC. The way Mixed GC works is essentially the same as YGC.
+The main difference is that the area it cleans up includes a part of Old
+Region in addition to Young Region. Mixed GC recovery first checks whether
+the recyclable waste is greater than the threshold ratio defined by
+G1HeapWastePercent. Only above this threshold will trigger the recovery
+because GC is very expensive. If the recovery efficiency is not good, there
+is very little garbage, and G1 is not necessary to trigger. GC. Mixed GC
+prefers the Old area with a small survival ratio so that as much waste as
+possible can be recycled. If the survival ratio in a region is high, greater
+than the threshold of <code class="docutils literal notranslate"><span class="pre">G1MixedGCLiveThresholdPercent</span></code>, then the Region is
+worthless to recycle, and the Region is ignored. Mixed GC also fully
+respects <code class="docutils literal notranslate"><span class="pre">MaxGCPauseMillis</span></code>, which will select Old Region as much as
+possible, provided that the estimated recovery times for these Old Region
+and Young Region do not add up to MaxGCPauseMillis. If <code class="docutils literal notranslate"><span class="pre">MaxGCPauseMillis</span></code>
+is small, Mixed GC is difficult to meet the requirements, it will also
+choose a minimum number of Old Region List for recycling, the minimum queue
+length is controlled by <code class="docutils literal notranslate"><span class="pre">G1MixedGCCountTarget</span></code> (default is 8), with all
+Old Region candidates list Dividing the length by <code class="docutils literal notranslate"><span class="pre">G1MixedGCCountTarget</span></code>
+to get the number is the minimum reclaim length. By erasing this length and
+selecting all Old Region candidates according to the high to low survival
+rate, the old Mixed Recycling List of the Mixed GC is obtained and copied
+and recovered. Essentially, <code class="docutils literal notranslate"><span class="pre">G1MixedGCCountTarget</span></code> means that the
+recycling of the Old Zone is allowed to pass through multiple Mixed GCs,
+but not too many times, and must not exceed the number of times
+<code class="docutils literal notranslate"><span class="pre">G1MixedGCCountTarget</span></code> has agreed. Below is an example of a GC log printed
+by the Mixed GC at the G1Ergonomics Level.</p>
+</div>
+<p>    :</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">8822.704</span><span class="p">:</span> <span class="p">[</span><span class="n">G1Ergonomics</span> <span class="p">(</span><span class="n">Mixed</span> <span class="n">GCs</span><span class="p">)</span> <span class="k">continue</span> <span class="n">mixed</span> <span class="n">GCs</span><span class="p">,</span> <span class="n">reason</span><span class="p">:</span> <span class="n">candidate</span> <span class="n">old</span> <span class="n">regions</span> <span class="n">available</span><span class="p">,</span> <span class="n">candidate</span> <span class="n">old</span> <span class="n">regions</span><span class="p">:</span> <span class="mi">444</span> <span class="n">regions</span><span class="p">,</span> <span class="n">reclaimable</span><span class="p">:</span> <span class="mi">4482864320</span> <span class="nb">bytes</span> <span class="p">(</span><span class="mf">16.06</span> <span class="o">%</span><span class="p">),</span> <span class="n">threshold</span><span class="p">:</span> <span class="mf">10.00</span> <span class="o">%</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>It should be assumed that the Mixed GC should be performed after the
+Concurrent Cycle is finished, but G1 chooses to perform YGC first, then
+Mixed GC. If you choose to open the JVM parameter
+<code class="docutils literal notranslate"><span class="pre">-XX:+PrintAdaptiveSizePolicy</span></code>, you will see the Concurrent Cycle in the
+GC log. The Mixed GC will be canceled because
+<code class="docutils literal notranslate"><span class="pre">&quot;do</span> <span class="pre">not</span> <span class="pre">start</span> <span class="pre">mixed</span> <span class="pre">GCs,</span> <span class="pre">reason:</span> <span class="pre">concurrent</span> <span class="pre">cycle</span> <span class="pre">is</span> <span class="pre">about</span> <span class="pre">to</span> <span class="pre">start&quot;</span></code>. As
+for why the G1 chooses to cancel the deep-rooted reason of the previous
+Mixed GC, interested readers can study The
+<code class="docutils literal notranslate"><span class="pre">G1CollectorPolicy::record_collection_pause_end</span></code> method.</p>
+</div>
+<div class="admonition note" id="index-5">
+<p class="admonition-title">Note</p>
+<p>The triggering of the Full GC is more complicated.</p>
+<p>In the CMS GC, the direct cause of Full GC was the failure of the YGC
+promotion. YGC will estimate the success of promotion according to certain
+algorithms before each GC. This is called promotion guarantee. If the
+promotion guarantee is successful, then YGC will proceed, otherwise YGC will
+fall into the state of attempt failure. If the YGC fails, at this point the
+memory will be in an inconsistent state, it will notify the CMS GC to
+recycle, and the CMS GC will execute a StopTheWorld compressed GC (this
+compressed GC has two options, one is to use Serial) GC to do Full GC, the
+other is CMS’s own STW only recycles the foreground collector of the old
+area, the specific choice needs to be determined according to the parameters
+<code class="docutils literal notranslate"><span class="pre">UseCMSCompactAtFullCollection</span></code> and <code class="docutils literal notranslate"><span class="pre">CMSFullGCsBeforeCompaction</span></code>, by
+default, Serial Full GC). When the YGC fails, if it happens to be in a CMS
+Concurrent phase, the Concurrent phase will be interrupted. At this point,
+the GC log will insert a CMS-related record containing the words concurrent
+mode failure in the middle of the ParNew GC log. It should be noted that
+when a concurrent mode failure occurs, it generally means that the Full GC
+(foreground collector will not be enabled under the default parameters),
+although this time gc does not necessarily mark the Full GC. If the YGC
+fails and is not in a CMS Concurrent phase, the gc log will simply report a
+Full GC with no words like concurrent mode failure.</p>
+<p>Even if the promotion guarantee is successful, YGC may still fail to try.
+This is because the promotion estimate is based on historical data
+estimates. If the application’s behavior changes drastically, this
+prediction is not allowed. At this point, the processing flow of the YGC
+attempt failure is consistent with the processing flow of the previous
+promotion guarantee failure.</p>
+<p>The following code shows the logic of the promotion guarantee failure. As
+you can see from the code below, there are two conditions for the promotion
+guarantee: either the old area has more space than the historical average
+promotion size, or the old area has more space than the new generation of
+the current size.</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="mi">299</span> <span class="kt">bool</span> <span class="n">TenuredGeneration</span><span class="o">::</span><span class="n">promotion_attempt_is_safe</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">max_promotion_in_bytes</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span>
+<span class="mi">300</span>   <span class="kt">size_t</span> <span class="n">available</span> <span class="o">=</span> <span class="n">max_contiguous_available</span><span class="p">();</span>
+<span class="mi">301</span>   <span class="kt">size_t</span> <span class="n">av_promo</span> <span class="o">=</span> <span class="p">(</span><span class="kt">size_t</span><span class="p">)</span><span class="n">gc_stats</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">avg_promoted</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">padded_average</span><span class="p">();</span>
+<span class="mi">302</span>   <span class="kt">bool</span>   <span class="n">res</span> <span class="o">=</span> <span class="p">(</span><span class="n">available</span> <span class="o">&gt;=</span> <span class="n">av_promo</span><span class="p">)</span> <span class="o">||</span> <span class="p">(</span><span class="n">available</span> <span class="o">&gt;=</span> <span class="n">max_promotion_in_bytes</span><span class="p">);</span>
+<span class="mi">303</span>   <span class="nf">if</span> <span class="p">(</span><span class="n">PrintGC</span> <span class="o">&amp;&amp;</span> <span class="n">Verbose</span><span class="p">)</span> <span class="p">{</span>
+<span class="mi">304</span>     <span class="n">gclog_or_tty</span><span class="o">-&gt;</span><span class="n">print_cr</span><span class="p">(</span>
+<span class="mi">305</span>       <span class="s">&quot;Tenured: promo attempt is%s safe: available(&quot;</span><span class="n">SIZE_FORMAT</span><span class="s">&quot;) %s av_promo(&quot;</span><span class="n">SIZE_FORMAT</span><span class="s">&quot;),&quot;</span>
+<span class="mi">306</span>       <span class="s">&quot;max_promo(&quot;</span><span class="n">SIZE_FORMAT</span><span class="s">&quot;)&quot;</span><span class="p">,</span>
+<span class="mi">307</span>       <span class="n">res</span><span class="o">?</span> <span class="s">&quot;&quot;</span><span class="o">:</span><span class="s">&quot;not&quot;</span><span class="p">,</span> <span class="n">available</span><span class="p">,</span> <span class="n">res</span><span class="o">?</span> <span class="s">&quot;&gt;=&quot;</span><span class="o">:</span><span class="s">&quot;&lt;&quot;</span><span class="p">,</span>
+<span class="mi">308</span>       <span class="n">av_promo</span><span class="p">,</span> <span class="n">max_promotion_in_bytes</span><span class="p">);</span>
+<span class="mi">309</span>   <span class="p">}</span>
+<span class="mi">310</span>   <span class="k">return</span> <span class="n">res</span><span class="p">;</span>
+<span class="mi">311</span> <span class="p">}</span>
+</pre></div>
+</div>
+<p>There are many reasons why YGC attempts to fail. The most common one is that
+the CMS GC triggers too late. The CMS GC has a parameter
+<code class="docutils literal notranslate"><span class="pre">CMSInitiatingOccupancyFraction</span></code>, which is used to control the trigger
+threshold of the CMS GC, the default is 60%. We know that CMS is a
+Concurrent GC. It does not suspend the Mutator thread to complete garbage
+collection as much as possible. However, as long as the Mutator is not
+completely suspended, it is inevitable that the Concurrent phase of the GC
+will continue to have objects assigned or promoted to the old zone. If the
+threshold is set too high (such as 90%), then the free space left by the CMS
+trigger is too small, the object in the old area is filled too fast, and the
+CMS is too full to process. The second common cause is because CMS memory is
+fragmented and there is a lot of fragmented space, which makes the promotion
+guarantee always successful, but the actual YGC execution is caught in the
+failure of the attempt. The third common reason is that sometimes the
+application behavior suddenly changes, and the memory allocation pressure
+suddenly becomes large in a short period of time, which makes the YGC
+promotion attempt fail. In addition, the situation of
+<a class="reference external" href="https://docs.oracle.com/javase/8/docs/technotes/guides/vm/gctuning/cms.html#sthref36">Floating Garbage</a>
+will also be the scene of concurrent mode failure. In the case of oiling,
+Floating Garbage essentially reduces the recycling efficiency of CMS, so
+that the conccurrent concurrency phase of CMS cannot match the filling of
+the old area.</p>
+<p>In G1, the trigger of Full GC is an extreme case, and there are usually
+several scenarios triggered. The first one is caused by Metaspace. When
+Metasapce reaches the MaxMetaspaceSize limit and no longer allocates memory,
+the JVM triggers the GC to unload the class. Prior to JDK8u40, class unload
+was triggered by the Full GC, so this is very common. After JDK8u40, class
+unload is no longer triggered by Full GC, but there will also be a Full GC
+triggered by Metadata. This is because Metaspace cannot meet the allocation
+trigger Conccurrent Cycle (initail-mark, concurrent-mark and so on). When
+Metasapce is uninstalled and cleaned up, Metaspace cleanup is concurrent
+with concurrent metaspace allocation. In theory, Metaspace does not
+necessarily guarantee that free memory will be cleaned up quickly. For
+efficiency reasons, Metaspace is still optimistic that the Concurrent Cycle
+will be triggered to make a distribution attempt. If the concurrent phase is
+very fast, this speculative allocation will succeed. If the conccurent phase
+is slow, then this speculative allocation will fail, but fail. The Full GC
+will be triggered. Another case is to consider <code class="docutils literal notranslate"><span class="pre">CompressedClassSpaceSize</span></code>.
+When <code class="docutils literal notranslate"><span class="pre">UseCompressedOops</span></code> and <code class="docutils literal notranslate"><span class="pre">UseCompressedClassesPointers</span> <span class="pre">are</span> <span class="pre">opened,</span>
+<span class="pre">the</span> <span class="pre">Klass</span> <span class="pre">data</span> <span class="pre">is</span> <span class="pre">actually</span> <span class="pre">stored</span> <span class="pre">in</span> <span class="pre">a</span> <span class="pre">separate</span> <span class="pre">memory</span> <span class="pre">controlled</span> <span class="pre">by</span>
+<span class="pre">``CompressedClassSpaceSize</span></code>. If the <code class="docutils literal notranslate"><span class="pre">CompressedClassSpaceSize</span></code> limit is
+unreasonable, it will also trigger the Full GC caused by Metaspace.</p>
+<p>The Full GC in the second case is also often encountered, in which case a
+large number of GCs with <code class="docutils literal notranslate"><span class="pre">&quot;to-space</span> <span class="pre">exhausted&quot;</span></code> fields will occur before
+the Full GC. <code class="docutils literal notranslate"><span class="pre">&quot;to-space</span> <span class="pre">exhausted&quot;</span></code> occurred because G1 reserved enough
+space through <code class="docutils literal notranslate"><span class="pre">G1ReservePercent</span></code>, causing evcuate to fail.
+<code class="docutils literal notranslate"><span class="pre">&quot;to-space</span> <span class="pre">exhausted&quot;</span></code> itself is expensive and can seriously affect the
+GC’s pause time. If <code class="docutils literal notranslate"><span class="pre">&quot;to-space</span> <span class="pre">exhausted&quot;</span></code> is followed by a Full GC, this
+situation means that the application has undergone a lot of promotion during
+this time, and the rhythm of the Old Zone GC cannot keep up with the
+application’s allocation behavior. In some scenarios,
+<code class="docutils literal notranslate"><span class="pre">&quot;to-space</span> <span class="pre">exhausted&quot;</span></code> does not always follow the Full GC, but it should
+be emphasized that in either case, in JDK8, <code class="docutils literal notranslate"><span class="pre">&quot;to-space</span> <span class="pre">exhausted&quot;</span></code> is very
+expensive, in a certain These scenes are even more time consuming than the
+Full GC itself. This
+<a class="reference external" href="https://bugs.openjdk.java.net/browse/JDK-8155256">Bug</a> has been fixed in
+JDK9, the pause time for <code class="docutils literal notranslate"><span class="pre">&quot;to-space</span> <span class="pre">exhausted&quot;</span></code> is equivalent to a normal
+YGC/Mix GC in JDK 9. In general, <code class="docutils literal notranslate"><span class="pre">&quot;to-space</span> <span class="pre">exhausted&quot;</span></code> can be
+circumvented by adjusting GC parameters, such as adjusting IHOP and
+<code class="docutils literal notranslate"><span class="pre">G1ReservePercent</span></code>.</p>
+<p>In the third case, the Full GC is caused by the Concurrent Cycle. In this
+case, the Concurrent Cycle’s concurrent-mark is not completed yet, and the
+memory is used up. Then the GC execution is impossible to talk about. In
+this case, the only choice for the JVM is really only the Full GC. This
+situation is also common in GC logs. Below is an example of the output of a
+GC log.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">57929.136</span><span class="p">:</span> <span class="p">[</span><span class="n">GC</span> <span class="n">concurrent</span><span class="o">-</span><span class="n">mark</span><span class="o">-</span><span class="n">start</span><span class="p">]</span>
+<span class="mf">57955.723</span><span class="p">:</span> <span class="p">[</span><span class="n">Full</span> <span class="n">GC</span> <span class="mi">10</span><span class="n">G</span><span class="o">-&gt;</span><span class="mi">5109</span><span class="n">M</span><span class="p">(</span><span class="mi">12</span><span class="n">G</span><span class="p">),</span> <span class="mf">15.1175910</span> <span class="n">secs</span><span class="p">]</span>
+<span class="mf">57977.841</span><span class="p">:</span> <span class="p">[</span><span class="n">GC</span> <span class="n">concurrent</span><span class="o">-</span><span class="n">mark</span><span class="o">-</span><span class="n">abort</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>It can be seen that when the concurrent-mark-start is started shortly, the
+Full GC happens directly. In this case, a common reason is that the large
+allocation of humongous objects causes the concurrent-mark to fail to
+complete.</p>
+<p>It is worth mentioning that, whether it is CMS or G1, Full GC as a kind of
+helpless response in extreme scenes, it needs to be avoided as much as
+possible. JDK is also optimized for gc in this extreme scenario. For G1,
+<a class="reference external" href="http://openjdk.java.net/jeps/307">JEP307</a> tries to do Full GC through
+multithreading. This function is in JDK10. Will be released. For CMS, AJDK
+has a parameter <code class="docutils literal notranslate"><span class="pre">-XX:+CMSParallelFullGC</span></code>, which can also speed up Full GC
+in parallel with multiple threads.</p>
+</div>
+</div>
+<div class="section" id="cms-memory-fragmentation-leads-to-full-gc">
+<h3>CMS memory fragmentation leads to Full GC<a class="headerlink" href="#cms-memory-fragmentation-leads-to-full-gc" title="Permalink to this headline">¶</a></h3>
+<p>The CMS GC is essentially a Mark-Sweep GC algorithm that does not defragment the
+reclamation area. When fragmentation occurs, although there are still a lot of
+memory through gcutil, the Full GC will be triggered for defragmentation. If you
+observe the GC day and you will find the moment when the Full GC occurs, the
+proportion of the Old area is not very high. This phenomenon can be confirmed as
+the Full GC caused by CMS fragmentation.</p>
+</div>
+<div class="section" id="on-heap-memory-increase-abnormality">
+<h3>On-heap memory increase abnormality<a class="headerlink" href="#on-heap-memory-increase-abnormality" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference internal" href="subsection-01.html#offheapincrement"><span class="std std-ref">On-heap memory increase abnormality</span></a> is also very likely
+to cause GC trigger exception, where
+<a class="reference internal" href="subsection-01.html#metaspaceincrement"><span class="std std-ref">Metaspace abnormal increase</span></a> is important to
+investigate.</p>
+</div>
+<div class="section" id="off-heap-memory-increase-abnormality">
+<h3>Off-heap memory increase abnormality<a class="headerlink" href="#off-heap-memory-increase-abnormality" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference internal" href="subsection-02.html#heapincrement"><span class="std std-ref">Off-heap memory increase abnormality</span></a> could also result to
+trigger exception eazily.</p>
+</div>
+<div class="section" id="full-gc-triggered-by-the-user-through-tools-such-as-jmap">
+<h3>Full GC triggered by the user through tools such as jmap<a class="headerlink" href="#full-gc-triggered-by-the-user-through-tools-such-as-jmap" title="Permalink to this headline">¶</a></h3>
+<p>Jmap can also trigger Full GC, such as:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>Jmap histo:live <span class="nv">$pid</span>
+Jmap dump:live <span class="nv">$pid</span>
+</pre></div>
+</div>
+<p>These Full GCs are generally performed by the user or the system for diagnostic
+purposes. The following is an example of a Full GC log triggered by jmap
+<code class="docutils literal notranslate"><span class="pre">histo:live</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">Full</span> <span class="n">GC</span> <span class="p">(</span><span class="n">Heap</span> <span class="n">Inspection</span> <span class="n">Initiated</span> <span class="n">GC</span><span class="p">)</span> <span class="mi">2018</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">29</span><span class="n">T15</span><span class="p">:</span><span class="mi">26</span><span class="p">:</span><span class="mf">51.070</span><span class="o">+</span><span class="mi">0800</span><span class="p">:</span> <span class="mf">51.754</span><span class="p">:</span> <span class="p">[</span><span class="n">CMS</span><span class="p">:</span> <span class="mi">82418</span><span class="n">K</span><span class="o">-&gt;</span><span class="mi">55047</span><span class="n">K</span> <span class="p">(</span><span class="mi">131072</span><span class="n">K</span><span class="p">),</span> <span class="mf">0.3246618</span> <span class="n">secs</span><span class="p">]</span> <span class="mi">138712</span><span class="n">K</span><span class="o">-&gt;</span><span class="mi">55047</span><span class="n">K</span> <span class="p">(</span><span class="mi">249088</span><span class="n">K</span><span class="p">),</span> <span class="p">[</span><span class="n">Metaspace</span><span class="p">:</span> <span class="mi">60713</span><span class="n">K</span><span class="o">-</span> <span class="o">&gt;</span><span class="mi">60713</span><span class="n">K</span><span class="p">(</span><span class="mi">1103872</span><span class="n">K</span><span class="p">)],</span> <span class="mf">0.3249927</span> <span class="n">secs</span><span class="p">]</span> <span class="p">[</span><span class="n">Times</span><span class="p">:</span> <span class="n">user</span><span class="o">=</span><span class="mf">0.32</span> <span class="n">sys</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">real</span><span class="o">=</span><span class="mf">0.32</span> <span class="n">secs</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>The following is an example of a full GC log triggered by jmap <code class="docutils literal notranslate"><span class="pre">dump:live</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">Full</span> <span class="n">GC</span> <span class="p">(</span><span class="n">Heap</span> <span class="n">Dump</span> <span class="n">Initiated</span> <span class="n">GC</span><span class="p">)</span> <span class="mi">2018</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">29</span><span class="n">T15</span><span class="p">:</span><span class="mi">31</span><span class="p">:</span><span class="mf">53.825</span><span class="o">+</span><span class="mi">0800</span><span class="p">:</span> <span class="mf">354.510</span><span class="p">:</span> <span class="p">[</span><span class="n">CMS2018</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">29</span><span class="n">T15</span><span class="p">:</span><span class="mi">31</span><span class="p">:</span><span class="mf">53.825</span><span class="o">+</span><span class="mi">0800</span><span class="p">:</span> <span class="mf">354.510</span><span class="p">:</span> <span class="p">[</span><span class="n">CMS</span><span class="p">:</span> <span class="mi">55047</span><span class="n">K</span><span class="o">-&gt;</span><span class="mi">56358</span><span class="n">K</span> <span class="p">(</span><span class="mi">131072</span><span class="n">K</span><span class="p">),</span> <span class="mf">0.3116120</span> <span class="n">Secs</span><span class="p">]</span> <span class="mi">84678</span><span class="n">K</span><span class="o">-&gt;</span><span class="mi">56358</span><span class="n">K</span><span class="p">(</span><span class="mi">249088</span><span class="n">K</span><span class="p">),</span> <span class="p">[</span><span class="n">Metaspace</span><span class="p">:</span> <span class="mi">62153</span><span class="n">K</span><span class="o">-&gt;</span><span class="mi">62153</span><span class="n">K</span><span class="p">(</span><span class="mi">1105920</span><span class="n">K</span><span class="p">)],</span> <span class="mf">0.3119138</span> <span class="n">secs</span><span class="p">]</span> <span class="p">[</span><span class="n">Times</span><span class="p">:</span> <span class="n">user</span><span class="o">=</span><span class="mf">0.31</span> <span class="n">sys</span><span class="o">=</span><span class="mf">0.00</span><span class="p">,</span> <span class="n">real</span><span class="o">=</span><span class="mf">0.31</span> <span class="n">secs</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>This problem can be confirmed by troubleshooting the GC Cause field of the Full
+GC in the GC log.</p>
+</div>
+<div class="section" id="business-logic-error-calling-system-gc">
+<h3>Business logic error calling System.gc<a class="headerlink" href="#business-logic-error-calling-system-gc" title="Permalink to this headline">¶</a></h3>
+<p>Business logic will display System.gc for a variety of purposes, triggering CMS
+or Full GC. If you find GC Cause with System.gc in the GC log, you can confirm
+this problem. To further troubleshoot the actual source of System.gc, the
+troubleshooter can use <a class="reference external" href="https://github.com/btraceio/btrace">BTrace</a> to grab
+the real caller.</p>
+</div>
+<div class="section" id="unnecessary-full-gc-caused-by-expansion-of-large-size-arraylist">
+<h3>Unnecessary Full GC caused by expansion of large size ArrayList<a class="headerlink" href="#unnecessary-full-gc-caused-by-expansion-of-large-size-arraylist" title="Permalink to this headline">¶</a></h3>
+<p>The expansion of ArrayList is a very normal behavior, but due to the coincidence
+of the expanded scene, it may lead to unnecessary Full GC. Consider the
+following code</p>
+<div class="highlight-java notranslate"><div class="highlight"><pre><span></span><span class="n">Import</span> <span class="n">java</span><span class="o">.</span><span class="na">util</span><span class="o">.</span><span class="na">ArrayList</span><span class="o">;</span>
+<span class="n">Import</span> <span class="n">java</span><span class="o">.</span><span class="na">util</span><span class="o">.</span><span class="na">Date</span><span class="o">;</span>
+<span class="n">Import</span> <span class="n">java</span><span class="o">.</span><span class="na">util</span><span class="o">.</span><span class="na">List</span><span class="o">;</span>
+<span class="n">Public</span> <span class="kd">class</span> <span class="nc">Test</span> <span class="o">{</span>
+    <span class="n">Public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">newMem</span><span class="o">(</span><span class="kt">int</span> <span class="n">memMb</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">List</span> <span class="n">list</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ArrayList</span><span class="o">();</span>
+        <span class="n">For</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">memMb</span> <span class="o">*</span> <span class="mi">1000</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="n">Byte</span><span class="o">[]</span> <span class="n">bytes</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="o">[</span><span class="mi">1024</span> <span class="o">*</span> <span class="n">i</span><span class="o">];</span>
+            <span class="n">For</span> <span class="o">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">bytes</span><span class="o">.</span><span class="na">length</span><span class="o">;</span> <span class="n">j</span><span class="o">++)</span> <span class="o">{</span>
+                <span class="n">Bytes</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+            <span class="o">}</span>
+<span class="n">List</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">bytes</span><span class="o">);</span>
+        <span class="o">}</span>
+<span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;finish new memory:&quot;</span> <span class="o">+</span> <span class="n">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">());</span>
+    <span class="o">}</span>
+
+    <span class="n">Public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+<span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;memMB:&quot;</span> <span class="o">+</span> <span class="n">args</span><span class="o">[</span><span class="mi">0</span><span class="o">]);</span>
+<span class="n">Int</span> <span class="n">memMb</span> <span class="o">=</span> <span class="n">Integer</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="n">args</span><span class="o">[</span><span class="mi">0</span><span class="o">]);</span>
+<span class="n">newMem</span><span class="o">(</span><span class="n">memMb</span><span class="o">);</span>
+<span class="n">Try</span> <span class="o">{</span>
+<span class="n">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="mi">10000</span> <span class="o">*</span> <span class="mi">1000</span><span class="o">);</span>
+        <span class="o">}</span>
+<span class="n">Catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>In the above code, newMem allocates a relatively large array. When newMem
+returns, it is reasonable to say that list is used as a temporary object. It
+should be reclaimed by GC. If the size of the young area is small, then this
+part of newMem will be copied multiple times. Old area, if the old area of the
+system is also relatively small, then this part of the promotion of the old area
+will theoretically trigger the old gc, this time should find that the list is
+already a dead object can be recycled. But you will be surprised to find that
+this part of the object can not be recovered by the Old GC, such as CMS, but has
+to enter the Full GC, once the Full GC, the memory has been successfully
+recycled. This is a counterintuitive that why can’t the memory that CMS can’t
+recycle?</p>
+<p>The answer is very simple, which is caused by the expansion. When the newMem
+loop is expanded for the last time, the ArrayList is internally allocated a new
+array of size, and then the old array memory is passed through the shallow copy
+of System.arrayCopy. Copy it, this constitutes a cross-regional reference from
+the new generation to the old district. When newMem returns, even if Old GC
+occurs at this time, since old gc does not trigger young gc, the reference to
+the new area will prevent this part of the memory from being recycled, so that a
+large number of arrays in newMem cannot be recycled. But once the newMem
+returns, it is the Full GC. The expanded list of the existing area will be
+recycled, so that the old area can be cleaned normally.</p>
+</div>
+<div class="section" id="large-business-pressure-leads-to-frequent-ygc">
+<h3>Large business pressure leads to frequent YGC<a class="headerlink" href="#large-business-pressure-leads-to-frequent-ygc" title="Permalink to this headline">¶</a></h3>
+<p>This is also a common reason. If you find through the GC log, the frequency of
+YGC is relatively high, and the recovery effect of GC is also good. At the same
+time, it is found that the pressure of CPU and business indicators is relatively
+high. It can be considered that the business pressure is relatively large. Is
+not a malfunction. In this case, the user may need to optimize the code. The
+main idea is to avoid a large amount of memory allocation by means of the object
+pool. With Eclipse MAT, users can analyze the distribution of memory surviving
+objects, as well as the class name, to provide clues to the user’s code changes.
+In addition, jmap’s histo command can also provide clues in this regard.</p>
+</div>
+<div class="section" id="exception-gc-caused-by-javaagent">
+<h3>Exception GC caused by javaagent<a class="headerlink" href="#exception-gc-caused-by-javaagent" title="Permalink to this headline">¶</a></h3>
+<p>The application loads the javaagent for various purposes. Even if the
+application does not actively load through the -javaagent parameter, some
+systems forcibly inject agents for some java processes through SA APIs for
+security reasons. In general, a good javaagent will control its behavior and
+avoid excessive impact on the business Java process, but sometimes the logical
+exception of the javaagent will allocate a large number of objects, causing an
+abnormal GC. These abnormal GCs are very confusing, because users are likely to
+think only from the perspective of their own business logic, feel that their
+business TPS is very low, there should be no pressure on the GC, thus ignoring
+the existence of javaagent.</p>
+<p>Such problems need to ask the system administrator or view the configuration and
+application logs to find out. Generally, the injection of javaagent usually has
+log printing. There are also some clues to help locate problems, such as jstack
+found a large number of javaagent threads, such as jmap’s heapdump generated a
+large number of javaagent objects and so on.</p>
+</div>
+</div>
+<div class="section" id="id1">
+<h2>Troubleshooting<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>Metaspace is too high to cause frequent GC triggering. It can be solved by
+[Metspace caused by memory leak](#Metaspace caused by memory leak). Metspace
+fragmentation problem solution could be also found
+[Metaspacememory leak](#Metaspace Memory leaks are also available. If the GC
+parameter setting is unreasonable, please adjust the JVM startup parameters
+according to the empirical formula in the corresponding section
+:ref:` related section &lt;GCParamAnchor&gt;`.</p>
+<p>The scene of <code class="docutils literal notranslate"><span class="pre">generatedMethodAccessorXXX</span></code> is a special kind of scenario. In
+general, you can try to avoid multi-threaded reflection through logical
+modification. You can also consider caching Method.</p>
+<p>For CMS Full GC, if it is caused by CMS fragmentation, there is no good
+solution for the moment. One way is to increase the memory. The other method is
+to switch to G1. In addition, trying to lower <code class="docutils literal notranslate"><span class="pre">CMSInitiatingOccupancyFraction</span></code>
+will also reduce the possible line of Full GC. The last thing to emphasize is
+that it is also important to set the appropriate memory size according to the
+formula.</p>
+<p>For G1/CMS Full GC, if it is triggered by Metadata, try to increase the size of
+Metaspace, and refer to the relevant section of Metaspace in the out-of-heap
+memory increase exception for Metaspace tuning. The general approach is to
+increase the size of Metaspace and pass Control the upper and lower bounds of
+Metaspace to avoid fragmentation caused by Metaspace’s expansion/shrink. In
+addition, the G1 Full GC is also improved based on the previous GC parameter
+settings.</p>
+<p>The Full GC triggered by the user through tools such as jmap needs to find out
+the specific reason why the user executes this command.</p>
+<p>Business logic error calling System.gc belongs to the problem of code logic. The
+caller is located through BTrace. It is necessary to combine the code to
+demonstrate the necessity. It can be placed in midnight and other times when the
+traffic is not busy, Full GC avoids the impact on the business. In addition, if
+you do not want to go deep into the caller, it is also optional to directly
+enable <code class="docutils literal notranslate"><span class="pre">-XX:+DisableExplicitGC</span></code> to directly disable system.gc and use
+<code class="docutils literal notranslate"><span class="pre">-XX:+ExplicitGCInvokesConcurrent</span></code> to replace Full GC with CMS GC.</p>
+<p>The Full GC problem caused by ArrayList expansion can be achieved by setting a
+reasonable estimate of the capacity to avoid unnecessary expansion.
+<code class="docutils literal notranslate"><span class="pre">-XX:+CMSScavengeBeforeRemark</span></code> can solve this problem by making a YGC before
+CMS Final Remark, so that the garbage in the Young area can be recycled.</p>
+<p>The exception GC caused by javagent requires the logic of the review javaagent
+to be modified by code.</p>
+<p>Frequent YGC caused by business pressure, users need to optimize their code.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../section-02/section.html" class="btn btn-neutral float-right" title="Delayed fault" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="subsection-02.html" class="btn btn-neutral float-left" title="Abnormal memory increase in the on-heap memory" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, fangxi.yfx
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,232 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>阿里巴巴JDK故障排查指南 &mdash; Alibaba JDK Troubleshooting Guide 1.0.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="内存故障" href="chapter-01/section-01/section.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="#" class="icon icon-home"> Alibaba JDK Troubleshooting Guide
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="chapter-01/section-01/section.html">内存故障</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chapter-01/section-02/section.html">延迟故障</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">Alibaba JDK Troubleshooting Guide</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="#">Docs</a> &raquo;</li>
+        
+      <li>阿里巴巴JDK故障排查指南</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="jdk">
+<h1>阿里巴巴JDK故障排查指南<a class="headerlink" href="#jdk" title="Permalink to this headline">¶</a></h1>
+<p>在线上运维和日常开发过程中，工程师往往会遇到各种各样的JDK问题。这些问题诊断起来比较困难，集团一直以来缺乏这类问题的标准处理规范，各个BU工程师之间的经验也无法共享，彼此之间的重复劳动很多。</p>
+<p>AJDK Troubleshooting Guide是由Alibaba JVM团队整理出的一套JDK问题处理规范，描述总结集团各个BU线上遇到的各种Java问题的现象，原因，诊断步骤以及处理方法。基于这套规范，工程师可以方便快捷的定位出问题，并给出解决方案。并且这套规范吸取了各个BU工程师的各方面经验，也使得JDK故障排查经验能在集团范围内得以共享，提高了集团Java开发及运维水平。</p>
+<p>综上所述，Alibaba JDK Troubleshooting Guide(ATG)项目的主要目标:</p>
+<ul class="simple">
+<li><p>规范标准化集团的JDK问题排查流程，提高故障解决效率。</p></li>
+<li><p>总结沉淀集团JDK故障排查经验，提高开发人员Java水平。</p></li>
+<li><p>为集团运维故障排查自动化，工具化提供知识储备。</p></li>
+</ul>
+<p>这套规范主要针对AJDK8。 AJDK8是由Alibaba JVM团队维护的OpenJDK 8u分支，相比社区分支，AJDK8魔改了很多模块，开发了很多有用的特性，并在工具方面提供了更加强大的支持，更加安全，高效和可靠。</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="chapter-01/section-01/section.html">内存故障</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="chapter-01/section-01/subsection-01.html">堆外内存增涨异常</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chapter-01/section-01/subsection-02.html">堆内内存增涨异常</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chapter-01/section-01/subsection-03.html">GC触发异常</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="chapter-01/section-02/section.html">延迟故障</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="chapter-01/section-02/subsection-01.html">应用暂停异常</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chapter-01/section-02/subsection-02.html">GC暂停异常</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="indices-and-tables">
+<h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="chapter-01/section-01/section.html" class="btn btn-neutral float-right" title="内存故障" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, fangxi.yfx
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

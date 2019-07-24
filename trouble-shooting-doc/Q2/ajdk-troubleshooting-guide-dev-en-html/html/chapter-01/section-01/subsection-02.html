@@ -1,0 +1,282 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Abnormal memory increase in the on-heap memory &mdash; Alibaba JDK Troubleshooting Guide 1.0.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="GC trigger exception" href="subsection-03.html" />
+    <link rel="prev" title="Off-Heap Memory Increase Abnormality" href="subsection-01.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> Alibaba JDK Troubleshooting Guide
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="section.html">memory issues</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="subsection-01.html">Off-Heap Memory Increase Abnormality</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Abnormal memory increase in the on-heap memory</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#the-phenomenons-of-issues">The phenomenons of issues</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-reasons-of-issues">The reasons of issues</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#increased-business-pressure">Increased business pressure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#java-object-leakage">Java object leakage</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Troubleshooting</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="subsection-03.html">GC trigger exception</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../section-02/section.html">Delayed fault</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Alibaba JDK Troubleshooting Guide</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="section.html">memory issues</a> &raquo;</li>
+        
+      <li>Abnormal memory increase in the on-heap memory</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/chapter-01/section-01/subsection-02.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="abnormal-memory-increase-in-the-on-heap-memory">
+<span id="heapincrement"></span><h1>Abnormal memory increase in the on-heap memory<a class="headerlink" href="#abnormal-memory-increase-in-the-on-heap-memory" title="Permalink to this headline">¶</a></h1>
+<p>The most common reason of abnormal memory increase in the on-heap memory is memory leakage, mainly due to the continue increase of JVM-managed heap caused by improper application usage. If the user does not limit the size of the heap by the usage of parameter <code class="docutils literal notranslate"><span class="pre">-Xmx</span></code>, the user will find that the RSS is getting larger and larger by the <code class="docutils literal notranslate"><span class="pre">top</span></code> command and will be killed by kernel OOM until exceeding the upper limit of the operating system. If the user limits the heap size by <code class="docutils literal notranslate"><span class="pre">-Xmx</span></code>, the log will report an OOM error.</p>
+<p>In addition, the sudden increase in business pressure will also cause an abnormal increase in the on-heap memory.</p>
+<div class="section" id="the-phenomenons-of-issues">
+<h2>The phenomenons of issues<a class="headerlink" href="#the-phenomenons-of-issues" title="Permalink to this headline">¶</a></h2>
+<p>The most phenomenons of issues:
+- If the user does not use <code class="docutils literal notranslate"><span class="pre">-Xmx</span></code> to limit on-heap memory, and the top command shows that the Java process RSS is significantly exceed the reasonable range and continues to grow.
+- If the user does not use <code class="docutils literal notranslate"><span class="pre">-Xmx</span></code> to limit on-heap memory, and the Java process inexplicably disappears, and although the startup script has set <code class="docutils literal notranslate"><span class="pre">ulimit</span> <span class="pre">-c</span> <span class="pre">unlimited</span></code>, it does not leave any core files in the disk.
+- If the user limits the on-heap memory size by <code class="docutils literal notranslate"><span class="pre">-Xmx</span></code>, and the Java process log reports an <code class="docutils literal notranslate"><span class="pre">OutOfMemory</span></code> error.
+- GC logs are frequently GC, and GC is not efficient, can not reclaim memory.</p>
+</div>
+<div class="section" id="the-reasons-of-issues">
+<h2>The reasons of issues<a class="headerlink" href="#the-reasons-of-issues" title="Permalink to this headline">¶</a></h2>
+<p>The followings are the reasons of issues:</p>
+<ul class="simple">
+<li><p>Increased business pressure.</p></li>
+<li><p>Java memory leakage.</p></li>
+</ul>
+<p>When the performance of the on-heap memory is suspected to be leaked, whether increased business pressure or not should be first be checkout. If the business pressure is relatively large, CPU usage and network IO activity are relatively high, it will often show similar symptoms such as OOM and other on-heap memory leaks.</p>
+<p>Another possibility is a Java object leak caused by a logic error in the code.</p>
+</div>
+<div class="section" id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this headline">¶</a></h2>
+<p>The troubleshooting of the on-heap is relatively simple. The main idea is to analyze the leak point, find the clue, and then modify the code.</p>
+<div class="section" id="increased-business-pressure">
+<h3>Increased business pressure<a class="headerlink" href="#increased-business-pressure" title="Permalink to this headline">¶</a></h3>
+<p>This situation is often overlooked, and these two steps can be used to initially confirm such problems:</p>
+<ul class="simple">
+<li><p>System resource usage is increasing, monitoring tools show that the CPU usage, network IO activity and traffic volume increase significantly.</p></li>
+<li><p>A large number of Java threads are running, and the user can confirm the number of threads and the current thread status through the JDK’s own <code class="docutils literal notranslate"><span class="pre">jstack</span></code> command.</p></li>
+</ul>
+<p>Each thread consumes a certain amount of memory when executing business logic. When the number of threads increases and the system pressure increases, the overall memory usage will increases, which puts a lot of pressure on the GC. Even if the number of threads does not change, when the business is busy, each thread will handle more business and consume more memory, which may cause the GC to slow down or even Full GC due to pressure increase.</p>
+</div>
+<div class="section" id="java-object-leakage">
+<h3>Java object leakage<a class="headerlink" href="#java-object-leakage" title="Permalink to this headline">¶</a></h3>
+<p>It is mainly caused by Java logic errors, there are kinds of performance, so the key is to analyze the leak points. There are a variety of tools in the Java ecosystem to support for troubleshooting, such as zprofiler and MAT, which allows you to analyze which surviving objects are currently in the heap, and which objects are directly or indirectly used by the GC Root so that cannot be recycled.</p>
+<p>The followings can be used to confirm this kind issue:</p>
+<ul class="simple">
+<li><p>First, generate a HeapDump of the Java process through the <code class="docutils literal notranslate"><span class="pre">jmap</span></code> command, and then upload the HeapDump to <code class="docutils literal notranslate"><span class="pre">zprofiler/eclipse-mat</span></code> for analysis.</p></li>
+<li><p>Then use the class view and memory leak report in zprofiler/eclipse-mat to see which objects occupied the heap in the entire Java process. If you find that Retained Heap of a certain class is more than 10%, it often means such problems.</p></li>
+<li><p>It can also be combined with the GC log for further analysis. If GC is found to occur frequently in the GC log, and the GC efficiency is very poor. In addition, there are still a large number of unreasonably large surviving objects after each CMS GC, Mixed GC or Full GC, which can be further determine this issue.</p></li>
+</ul>
+<p>When you find that the memory usage of a certain class is very unreasonable, you can check the following highlights by zprofiler/eclipse-mat:</p>
+<ul class="simple">
+<li><p>Find out these objects are referenced by which objects.</p></li>
+<li><p>Find out what the reference links of these objects to the GC Root are. By analyzing the inter-object relationship information and the object memory content on the reference link, the user should be able to find the clues of the leak.</p></li>
+</ul>
+<p>A common reason of leakage is the assignment of very large objects, such as large arrays. AJDK8 supports two parameters <code class="docutils literal notranslate"><span class="pre">-XX:+TraceG1HObjAllocation</span></code> (support G1 policy only) and <code class="docutils literal notranslate"><span class="pre">-XX:ArrayAllocationWarningSize=xxx</span></code> (support CMS policy only, 512M by default). With these two parameters, you can print out the thread stack when assigning large objects for easy troubleshooting.</p>
+<p>If the leak point of the application is obvious, the leak is concentrated on a special class, it can be checked by the type distribution histogram of the surviving object. There is no need for expensive HeapDump analysis. The histogram type distribution can be displayed by using the following jmap command.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>jmap histo:live <span class="nv">$PID</span>
+</pre></div>
+</div>
+<p>For the CMS GC strategy, AJDK8 also has a parameter <code class="docutils literal notranslate"><span class="pre">-XX:+PrintYoungGenHistoAfterParNewGC</span></code> that prints the type distribution histogram through the standard output on the next ParNew GC. The command format is as follows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>jinfo -flag +PrintYoungGenHistoAfterParNewGC <span class="nv">$PID</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="id1">
+<h2>Troubleshooting<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>Problems caused by increased business pressure can only be solved by increasing memory and optimizing the design. If the increase of memory is not allowed by the conditional restrictions, you can try to troubleshooting user logic errors to guide the optimization design. Although jmap and zprofiler can not find the error point, it can also point out some clues to the optimization.</p>
+<p>If it is the problem of Java object leaks, the developer needs to solve the problem by review code according to the clues provided by zprofiler. It depends on the developer’s deep understanding of the Java application business logic and middleware system.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="subsection-03.html" class="btn btn-neutral float-right" title="GC trigger exception" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="subsection-01.html" class="btn btn-neutral float-left" title="Off-Heap Memory Increase Abnormality" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, fangxi.yfx
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
