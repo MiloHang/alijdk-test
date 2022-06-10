@@ -12,7 +12,7 @@
     <artifactId>alijdk-dubbo-test</artifactId>
 
     <properties>
-        <dubbo.version>2.6.2</dubbo.version>
+        <dubbo.version>2.6.12</dubbo.version>
     </properties>
     <dependencies>
         <dependency>
